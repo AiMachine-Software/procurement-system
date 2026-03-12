@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Calendar, User, LayoutGrid } from "lucide-react";
+import { Search, Plus, Calendar, User, LayoutGrid, LogOut } from "lucide-react";
 import { mockProjects } from "./mocks/dashboard.mock.table";
 import AddProjectModal from "./addprojectmodal";
+import LogoutModal from "./logoutmodal";
 
 /**
  * @license
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   // ข้อมูลโปรเจกต์ (จำลอง)
   const [projects, setProjects] = useState(mockProjects);
@@ -25,6 +27,11 @@ export default function Dashboard() {
 
   const handleAddProject = (newProject: any) => {
     setProjects([newProject, ...projects]);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/');
   };
 
   return (
@@ -43,13 +50,17 @@ export default function Dashboard() {
             <h1 className="text-4xl font-black text-slate-900 tracking-tight">Projects</h1>
           </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="group flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-7 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-teal-200 active:scale-95"
-          >
-            <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
-            Add Project
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="group flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-7 py-3.5 rounded-2xl font-bold transition-all shadow-lg shadow-teal-200 active:scale-95"
+            >
+              <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+              Add Project
+            </button>
+
+
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -133,6 +144,23 @@ export default function Dashboard() {
         onClose={() => setIsModalOpen(false)}
         onAddProject={handleAddProject}
       />
+
+      <LogoutModal
+        isOpen={isLogoutModalOpen}
+        onClose={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+      />
+
+      {/* Button at bottom left (in normal document flow) */}
+      <div className="mt-6 px-2 flex justify-start w-full">
+        <button
+          onClick={() => setIsLogoutModalOpen(true)}
+          className="group flex items-center gap-2 text-rose-500 hover:text-rose-600 hover:bg-rose-50 px-4 py-2.5 rounded-xl font-bold transition-all shadow-sm active:scale-95 border border-transparent hover:border-rose-100"
+        >
+          <LogOut size={20} className="group-hover:-translate-x-1 transition-transform" />
+          Logout
+        </button>
+      </div>
     </div>
   );
 }

@@ -76,9 +76,8 @@ export default function Login() {
 
                         {/* Password Field */}
                         <div className="space-y-2">
-                            <div className="flex items-center justify-between ml-1">
+                            <div className="flex items-center ml-1">
                                 <label className="text-sm font-bold text-slate-700" htmlFor="password">Password</label>
-                                <a href="#" className="text-sm font-bold text-teal-600 hover:text-teal-700 transition-colors">Forgot Password?</a>
                             </div>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
@@ -103,18 +102,6 @@ export default function Login() {
                             </div>
                         </div>
 
-                        {/* Remember Me */}
-                        <div className="flex items-center ml-1">
-                            <input
-                                id="remember"
-                                type="checkbox"
-                                className="w-4 h-4 text-teal-600 bg-slate-50 border-slate-200 rounded focus:ring-teal-500 focus:ring-2 cursor-pointer transition-all"
-                            />
-                            <label htmlFor="remember" className="ml-2 text-sm font-medium text-slate-600 cursor-pointer select-none">
-                                Remember me for 30 days
-                            </label>
-                        </div>
-
                         {/* Submit Button */}
                         <button
                             type="submit"
@@ -135,13 +122,6 @@ export default function Login() {
                     </form>
                 </div>
 
-                {/* Footer */}
-                <p className="text-center mt-8 text-sm font-medium text-slate-500">
-                    Don't have an account?{' '}
-                    <a href="#" className="font-bold text-teal-600 hover:text-teal-700 transition-colors">
-                        Sign up now
-                    </a>
-                </p>
             </div>
         </div>
     );
