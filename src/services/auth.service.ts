@@ -24,5 +24,29 @@ export const authService = {
 
     logout: () => {
         localStorage.removeItem('token');
+    },
+
+    // Decode JWT payload จาก localStorage เพื่อดึง userId (ไม่ต้องเรียก API)
+    getCurrentUserId: (): string | null => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return null;
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            // รองรับ claim หลายแบบที่ backend อาจใช้
+            return payload.sub || payload.userId || payload.user_id || payload.id || null;
+        } catch {
+            return null;
+        }
+    },
+
+    getCurrentUserName: (): string | null => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return null;
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return payload.name || payload.username || payload.fullName || payload.preferred_username || null;
+        } catch {
+            return null;
+        }
     }
 };

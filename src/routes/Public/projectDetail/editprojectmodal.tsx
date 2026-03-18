@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, Users, Plus, Trash2, Mail, Shield } from 'lucide-react';
+import { X } from 'lucide-react';
+import { dropdownService, DropdownItem } from '../../../services/dropdown.service';
 
 interface EditProjectModalProps {
     isOpen: boolean;
@@ -9,47 +10,35 @@ interface EditProjectModalProps {
 }
 
 export default function EditProjectModal({ isOpen, onClose, project, onSave }: EditProjectModalProps) {
-    const MOCK_USERS = [
-        'john.doe@example.com',
-        'jane.smith@example.com',
-        'robert.johnson@example.com',
-        'emily.davis@example.com',
-        'michael.wilson@example.com',
-        'sarah.brown@example.com',
-        'somchai.jaidee@example.com'
-    ];
     const [editProjectData, setEditProjectData] = useState({ ...project });
-    const [members, setMembers] = useState<{ email: string, permission: string }[]>(project.members || []);
-    const [newMemberEmail, setNewMemberEmail] = useState('');
-    const [newMemberPermission, setNewMemberPermission] = useState('MEMBER');
-    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [statusOptions, setStatusOptions] = useState<DropdownItem[]>([]);
 
-    const filteredUsers = MOCK_USERS.filter(email =>
-        email.toLowerCase().includes(newMemberEmail.toLowerCase()) &&
-        !members.some(m => m.email === email)
-    );
+    useEffect(() => {
+        if (isOpen && statusOptions.length === 0) {
+            fetchStatusOptions();
+        }
+    }, [isOpen]);
+
+    const fetchStatusOptions = async () => {
+        try {
+            const data = await dropdownService.getDropdown('PROJECT');
+            if (Array.isArray(data)) {
+                setStatusOptions(data);
+            }
+        } catch (error) {
+            console.error('Failed to load status options:', error);
+        }
+    };
 
     useEffect(() => {
         setEditProjectData({ ...project });
-        setMembers(project.members || []);
     }, [project]);
 
     if (!isOpen) return null;
 
-    const handleAddMember = () => {
-        if (!newMemberEmail.trim()) return;
-        setMembers([...members, { email: newMemberEmail.trim(), permission: newMemberPermission }]);
-        setNewMemberEmail('');
-        setNewMemberPermission('MEMBER');
-    };
-
-    const handleRemoveMember = (index: number) => {
-        setMembers(members.filter((_, i) => i !== index));
-    };
-
     const handleSaveEdit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSave({ ...editProjectData, members });
+        onSave(editProjectData);
     };
 
     const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -80,7 +69,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                             name="title"
                             value={editProjectData.title || ''}
                             onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm mb-4"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm mb-4"
                             required
                         />
                     </div>
@@ -93,7 +82,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                             value={editProjectData.description || ''}
                             onChange={handleEditChange}
                             rows={3}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm"
                         ></textarea>
                     </div>
 
@@ -104,12 +93,22 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                             name="status"
                             value={editProjectData.status || ''}
                             onChange={handleEditChange}
-                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm bg-white"
+                            className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm bg-white"
                         >
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="IN_COMING">IN_COMING</option>
-                            <option value="SUCCESS">SUCCESS</option>
-                            <option value="CANCLE">CANCLE</option>
+                            {statusOptions.length > 0 ? (
+                                statusOptions.map((opt) => (
+                                    <option key={opt.code} value={opt.code}>
+                                        {opt.name}
+                                    </option>
+                                ))
+                            ) : (
+                                <>
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="IN_COMING">In coming</option>
+                                    <option value="SUCCESS">Success</option>
+                                    <option value="CANCLE">Cancel</option>
+                                </>
+                            )}
                         </select>
                     </div>
 
@@ -122,7 +121,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                                 name="kickoff"
                                 value={editProjectData.kickoff || ''}
                                 onChange={handleEditChange}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm"
                             />
                         </div>
                         <div>
@@ -133,101 +132,12 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                                 name="due"
                                 value={editProjectData.due || ''}
                                 onChange={handleEditChange}
-                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none transition-all text-sm"
+                                className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition-all text-sm"
                             />
                         </div>
                     </div>
 
-                    {/* Members Section */}
-                    <div className="space-y-2 mt-4">
-                        <label className="block text-sm font-semibold text-slate-700 mb-1">Team Members</label>
 
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <div className="relative flex-1 group">
-                                <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                    <Mail className="h-5 w-5 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                                </div>
-                                <input
-                                    type="email"
-                                    value={newMemberEmail}
-                                    onChange={(e) => {
-                                        setNewMemberEmail(e.target.value);
-                                        setIsDropdownOpen(true);
-                                    }}
-                                    onFocus={() => setIsDropdownOpen(true)}
-                                    onBlur={() => setTimeout(() => setIsDropdownOpen(false), 200)}
-                                    placeholder="Search member email..."
-                                    className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-12 pr-4 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-sm"
-                                />
-                                {isDropdownOpen && filteredUsers.length > 0 && (
-                                    <div className="absolute z-20 w-full mt-2 bg-white border border-slate-200 rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                                        {filteredUsers.map((email) => (
-                                            <div
-                                                key={email}
-                                                onClick={() => {
-                                                    setNewMemberEmail(email);
-                                                    setIsDropdownOpen(false);
-                                                }}
-                                                className="px-4 py-3 text-sm font-medium text-slate-700 hover:bg-teal-50 hover:text-teal-700 cursor-pointer transition-colors"
-                                            >
-                                                {email}
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                            <div className="relative w-full sm:w-40 group shrink-0">
-                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none z-10">
-                                    <Shield className="h-4 w-4 text-slate-400 group-focus-within:text-teal-500 transition-colors" />
-                                </div>
-                                <select
-                                    value={newMemberPermission}
-                                    onChange={(e) => setNewMemberPermission(e.target.value)}
-                                    className="w-full bg-white border border-slate-200 rounded-xl py-2 pl-9 pr-10 text-slate-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all text-sm appearance-none cursor-pointer"
-                                >
-                                    <option value="PM/KEY">PM/KEY</option>
-                                    <option value="MEMBER">MEMBER</option>
-                                    <option value="APPROVER">APPROVER</option>
-                                    <option value="BUYER">BUYER</option>
-                                </select>
-                                <div className="absolute inset-y-0 right-3 flex items-center pointer-events-none">
-                                    <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={handleAddMember}
-                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold transition-colors flex items-center justify-center shrink-0"
-                            >
-                                <Plus className="h-5 w-5" />
-                            </button>
-                        </div>
-
-                        {members.length > 0 && (
-                            <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 space-y-2 max-h-40 overflow-y-auto mt-2">
-                                {members.map((member, index) => (
-                                    <div key={index} className="flex items-center justify-between bg-white border border-slate-200 p-2 rounded-lg shadow-sm">
-                                        <div className="flex items-center gap-3 overflow-hidden">
-                                            <div className="bg-teal-100 text-teal-700 p-2 rounded-full hidden sm:block">
-                                                <Users className="h-4 w-4" />
-                                            </div>
-                                            <div className="truncate">
-                                                <p className="text-sm font-semibold text-slate-700 truncate">{member.email}</p>
-                                                <p className="text-xs text-slate-500">{member.permission}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveMember(index)}
-                                            className="p-2 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors shrink-0"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
 
                     <div className="pt-4 flex justify-end gap-3 mt-4 border-t border-slate-100">
                         <button
@@ -239,7 +149,7 @@ export default function EditProjectModal({ isOpen, onClose, project, onSave }: E
                         </button>
                         <button
                             type="submit"
-                            className="px-6 py-2.5 text-sm font-bold text-white bg-teal-600 hover:bg-teal-700 rounded-xl transition-colors shadow-lg shadow-teal-200"
+                            className="px-6 py-2.5 text-sm font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-colors shadow-lg shadow-amber-200"
                         >
                             Save Changes
                         </button>

@@ -4,9 +4,6 @@ import axios from 'axios';
 const axiosClient = axios.create({
     // Use the API URL from environment variables, or a relative path by default
     baseURL: import.meta.env.VITE_API_URL || '/api',
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
 
 // Request Interceptor: Attach Token automatically

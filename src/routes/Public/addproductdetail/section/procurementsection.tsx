@@ -3,17 +3,37 @@ import { ShoppingCart, Calendar, Building2, MessageSquare, ClipboardCheck, Save 
 
 interface ProcurementSectionProps {
     isApproved: boolean;
+    hasPermission?: boolean;
     isSaved?: boolean;
-    onSave?: () => void;
+    savedData?: { status: string; dateReceive: string; buyFrom: string; remark: string } | null;
+    onSave?: (data: { status: string; dateReceive: string; buyFrom: string; remark: string }) => void;
 }
 
-export default function ProcurementSection({ isApproved, isSaved, onSave }: ProcurementSectionProps) {
+export default function ProcurementSection({ isApproved, hasPermission = true, isSaved, savedData, onSave }: ProcurementSectionProps) {
     const [formData, setFormData] = useState({
         status: 'Make',
         dateReceive: '',
         buyFrom: '',
         remark: ''
     });
+
+    // Sync state with savedData from parent
+    React.useEffect(() => {
+        if (savedData) {
+            // Normalize status to match select options (casing)
+            let normalizedStatus = savedData.status || 'Make';
+            if (normalizedStatus.toUpperCase() === 'MAKE') normalizedStatus = 'Make';
+            if (normalizedStatus.toUpperCase() === 'BUY') normalizedStatus = 'Buy';
+            if (normalizedStatus.toUpperCase() === 'IN_STOCK' || normalizedStatus.toUpperCase() === 'INSTOCK') normalizedStatus = 'In_stock';
+
+            setFormData({
+                status: normalizedStatus,
+                dateReceive: savedData.dateReceive ? savedData.dateReceive.split('T')[0] : '',
+                buyFrom: savedData.buyFrom || '',
+                remark: savedData.remark || ''
+            });
+        }
+    }, [savedData]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
@@ -23,22 +43,24 @@ export default function ProcurementSection({ isApproved, isSaved, onSave }: Proc
     const handleSave = (e: React.FormEvent) => {
         e.preventDefault();
         console.log('Saving procurement details...', formData);
-        if (onSave) onSave();
+        if (onSave) onSave(formData);
     };
 
-    const isDisabled = !isApproved || isSaved;
+    const isDisabled = !isApproved || isSaved || !hasPermission;
 
     return (
-        <div className={`bg-white rounded-[2rem] shadow-sm border p-6 md:p-8 space-y-8 transition-colors ${isApproved ? 'border-amber-100' : 'border-slate-100 opacity-60'}`}>
+        <div className={`bg-white rounded-[2rem] shadow-sm border p-6 md:p-8 space-y-8 transition-colors ${isApproved && hasPermission ? 'border-amber-100' : 'border-slate-100 opacity-60'}`}>
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className={`p-3 rounded-xl ${isApproved ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400'}`}>
+                <div className={`p-3 rounded-xl ${isApproved && hasPermission ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400'}`}>
                     <ClipboardCheck className="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 className={`text-xl font-black tracking-tight ${isApproved ? 'text-slate-800' : 'text-slate-500'}`}>Procurement Section</h2>
-                    <p className="text-slate-500 text-sm mt-0.5">
-                        {isApproved ? 'Manage procurement details for this approved product.' : 'This section will be available after the product is approved.'}
+                    <h2 className={`text-xl font-black tracking-tight ${isApproved && hasPermission ? 'bg-gradient-to-r from-emerald-600 to-amber-500 bg-clip-text text-transparent' : 'text-slate-500'}`}>
+                        Procurement Details
+                    </h2>
+                    <p className="text-slate-500 text-sm mt-0.5 font-medium">
+                        {!hasPermission ? 'You do not have permission to modify procurement details.' : isApproved ? 'Provide procurement information for this product.' : 'This section will be available after the product is approved.'}
                     </p>
                 </div>
             </div>

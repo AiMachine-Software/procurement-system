@@ -4,16 +4,18 @@ import { X, Upload } from 'lucide-react';
 interface WithdrawModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (amount: number) => void;
+    onConfirm: (amount: number, remark: string) => void;
     maxAmount: number;
 }
 
 export default function WithdrawModal({ isOpen, onClose, onConfirm, maxAmount }: WithdrawModalProps) {
     const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+    const [remark, setRemark] = useState<string>('');
 
     useEffect(() => {
         if (isOpen) {
             setWithdrawAmount('');
+            setRemark('');
         }
     }, [isOpen]);
 
@@ -23,7 +25,7 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, maxAmount }:
         e.preventDefault();
         const amount = Number(withdrawAmount);
         if (amount > 0 && amount <= maxAmount) {
-            onConfirm(amount);
+            onConfirm(amount, remark);
         }
     };
 
@@ -73,6 +75,19 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, maxAmount }:
                                     className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 focus:bg-white transition-all outline-none font-medium"
                                 />
                             </div>
+                            <div className="space-y-2 mt-4">
+                                <label className="text-xs font-bold text-slate-700 uppercase tracking-widest ml-1">
+                                    Remark <span className="text-rose-500">*</span>
+                                </label>
+                                <textarea
+                                    value={remark}
+                                    onChange={(e) => setRemark(e.target.value)}
+                                    placeholder="Enter additional details or reasons for withdrawing..."
+                                    rows={3}
+                                    required
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-purple-500/10 focus:border-purple-500 focus:bg-white transition-all outline-none resize-none font-medium"
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -87,7 +102,7 @@ export default function WithdrawModal({ isOpen, onClose, onConfirm, maxAmount }:
                         </button>
                         <button
                             type="submit"
-                            disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > maxAmount}
+                            disabled={!withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > maxAmount || !remark.trim()}
                             className="flex-1 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-purple-600 px-4 py-3 rounded-xl font-bold transition-all active:scale-[0.98] shadow-md shadow-purple-200 flex items-center justify-center gap-2"
                         >
                             Confirm Withdraw
