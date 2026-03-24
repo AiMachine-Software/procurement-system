@@ -239,7 +239,8 @@ export default function AddMemberModal({ isOpen, onClose, projectId, onAddMember
                                         {filteredUsers.map((user) => (
                                             <div
                                                 key={user.id}
-                                                onClick={() => {
+                                                onMouseDown={(e) => {
+                                                    e.preventDefault();
                                                     setNewMemberEmail(user.email);
                                                     setSelectedUserId(user.id);
                                                     setIsDropdownOpen(false);
