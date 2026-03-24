@@ -177,24 +177,47 @@ export default function CreateSection({
 
     useEffect(() => {
         if (!productId) return;
-        const fetchProduct = async () => {
+        const fetchProductAndLogs = async () => {
             try {
-                const product = await productService.getProduct(productId);
+                // Fetch product and withdrawal logs in parallel
+                const [product, logsRes] = await Promise.all([
+                    productService.getProduct(productId),
+                    flowService.getWithdrawLogs(productId).catch(() => null)
+                ]);
 
-                // category: ใช้ id ของ categories ทั้งหมด (many to many)
+                // Process withdrawal logs
+                const logData = logsRes?.data || logsRes;
+                let fetchedLogs: { amount: number; withdrawerName: string; date: string; remark?: string }[] = [];
+                if (Array.isArray(logData)) {
+                    fetchedLogs = logData.map((log: any) => ({
+                        amount: Number(log.quantity || log.withdrawNum || log.amount || 0),
+                        withdrawerName: log.withdrawnBy || log.userName || log.withdrawerName || log.createdByName || 'Unknown User',
+                        date: log.withdrawnDate || log.dateRecord || log.date || log.createAt || log.createdAt || new Date().toISOString(),
+                        remark: log.remark || ''
+                    }));
+                    setWithdrawalLogs(fetchedLogs);
+                }
+
+                // Process product data
                 const categoryValues = product.categories?.length
                     ? product.categories.map((c: any) => String(c.id || c.categoryId || c.code))
                     : [];
 
-                // date: backend ส่ง ISO string, input[type=date] ต้องการแค่ YYYY-MM-DD
                 const dateValue = product.dateToUse
                     ? product.dateToUse.split('T')[0]
                     : '';
 
                 const rawRemark = product.remark || '';
                 setOriginalProductRemark(rawRemark);
+
                 const isApproverRemark = (externalApproverRemark && rawRemark === externalApproverRemark) || rawRemark.startsWith('Rejected: ');
-                const cleanRemark = isApproverRemark ? '' : rawRemark;
+
+                // Filter out withdrawal remarks: if product.remark matches any withdrawal log remark, don't show it in the Create form
+                // This prevents withdrawal remark from bleeding into the product remark field
+                const isWithdrawRemark = fetchedLogs.length > 0 &&
+                    fetchedLogs.some(log => log.remark && log.remark.trim() !== '' && log.remark === rawRemark);
+
+                const cleanRemark = (isApproverRemark || isWithdrawRemark) ? '' : rawRemark;
 
                 setFormData(prev => ({
                     ...prev,
@@ -234,7 +257,7 @@ export default function CreateSection({
                 console.error('Failed to fetch product:', error);
             }
         };
-        fetchProduct();
+        fetchProductAndLogs();
     }, [productId]);
 
     const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -295,6 +318,7 @@ export default function CreateSection({
             linkUrl: formData.urlLink,
             imageUrl: uploadedImagePath || "",
             useFor: formData.useFor,
+            statusCode: 'b1fc8b25-c572-4162-9131-7863e7af4873', // Force status back to Draft when saving
             remark: (() => {
                 const currentRemark = formData.remark.trim();
                 const originalRemark = originalProductRemark.trim();
@@ -394,32 +418,17 @@ export default function CreateSection({
                         <ArrowLeft className="w-4 h-4 mr-2" />
                         Back to Project
                     </button>
-                    <div className="flex gap-3 w-full sm:w-auto">
+                    <div className="flex flex-wrap gap-3 w-full sm:w-auto justify-center sm:justify-end">
                         {/* Read-only badge สำหรับ user ที่ไม่ใช่ member EXCEPT for status that requires receiving/withdrawing */}
-                        {isReadOnly && status !== 'procured' && status !== 'received' && status !== 'rejected' ? (
+                        {isReadOnly && status !== 'procured' && status !== 'received' && status !== 'fully_withdrawn' && status !== 'rejected' ? (
                             <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 text-slate-500 px-6 py-3 rounded-xl font-bold border border-slate-200 cursor-not-allowed select-none">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
                                 View Only
                             </div>
                         ) : (
                             <>{/* Render different buttons based on status */}
-                                {status === 'rejected' ? (
-                                    <div className="flex flex-col lg:flex-row items-center gap-3 w-full sm:w-auto">
-                                        {rejectInfo && (
-                                            <div className="flex items-center gap-2 bg-rose-50/80 border border-rose-200/50 px-4 py-3 rounded-xl shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
-                                                <span className="text-xs font-black text-rose-600 uppercase tracking-wider whitespace-nowrap">Remark :</span>
-                                                <span className="text-sm font-bold text-slate-700 italic">
-                                                    "{rejectInfo.remark}"
-                                                </span>
-                                            </div>
-                                        )}
-                                        <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-8 py-3 rounded-xl font-bold border border-rose-200 cursor-not-allowed shadow-sm">
-                                            <X className="w-5 h-5" />
-                                            <span className="text-lg">Rejected</span>
-                                        </div>
-                                    </div>
-                                ) : status === 'received' ? (
-                                    <div className="flex items-center gap-3 w-full sm:w-auto">
+                                {status === 'received' ? (
+                                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
                                         {receiveData && (
                                             <>
                                                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold shadow-sm whitespace-nowrap">
@@ -452,6 +461,30 @@ export default function CreateSection({
                                             {currentBalance === 0 && withdrawnAmountTotal > 0 ? 'Fully Withdrawn' : 'Received'}
                                         </div>
                                     </div>
+                                ) : status === 'fully_withdrawn' ? (
+                                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-center sm:justify-end">
+                                        {receiveData && (
+                                            <>
+                                                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm font-bold shadow-sm whitespace-nowrap">
+                                                    <CheckCircle className="w-4 h-4" />
+                                                    Received by {receiveData.receiverName} on {new Date(receiveData.receiveDate).toLocaleDateString('en-US')}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsLogModalOpen(true)}
+                                                    title="View Withdrawal Log"
+                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-sm font-bold shadow-sm whitespace-nowrap transition-colors outline-none cursor-pointer"
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    เบิกแล้ว: {withdrawnAmountTotal} / {originalTotal}
+                                                </button>
+                                            </>
+                                        )}
+                                        <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 px-6 py-3 rounded-xl font-bold border border-emerald-200 cursor-not-allowed">
+                                            <CheckCircle className="w-4 h-4" />
+                                            Fully Withdrawn
+                                        </div>
+                                    </div>
                                 ) : status === 'procured' ? (
                                     <>
                                         {/* Reject Receive button */}
@@ -475,10 +508,27 @@ export default function CreateSection({
                                     </>
                                 ) : (
                                     <>
-
+                                        {status === 'rejected' && (
+                                            <div className="flex flex-col lg:flex-row items-center gap-3 w-full sm:w-auto">
+                                                {rejectInfo && (
+                                                    <div className="flex items-center gap-2 bg-rose-50/80 border border-rose-200/50 px-4 py-3 rounded-xl shadow-sm animate-in fade-in slide-in-from-left-4 duration-500">
+                                                        <span className="text-xs font-black text-rose-600 uppercase tracking-wider whitespace-nowrap">Remark :</span>
+                                                        <span className="text-sm font-bold text-slate-700 italic">
+                                                            "{rejectInfo.remark}"
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                {isReadOnly && (
+                                                    <div className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-rose-50 text-rose-600 px-8 py-3 rounded-xl font-bold border border-rose-200 cursor-not-allowed shadow-sm">
+                                                        <X className="w-5 h-5" />
+                                                        <span className="text-lg">Rejected</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Local Edit toggle for Draft state */}
-                                        {!isPendingApproval && productId && !isEditing && (
+                                        {!isReadOnly && !isPendingApproval && productId && !isEditing && (
                                             <button
                                                 type="button"
                                                 onClick={() => setIsEditing(true)}
@@ -490,19 +540,21 @@ export default function CreateSection({
                                         )}
 
                                         {/* Send Approve button */}
-                                        <button
-                                            type="button"
-                                            onClick={handleApprove}
-                                            disabled={isPendingApproval || !productId || isEditing}
-                                            className={`flex-1 sm:flex-none group flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95 ${isPendingApproval || !productId || isEditing
-                                                ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed border border-slate-200'
-                                                : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
-                                                }`}
-                                            title={!productId ? "Please save as draft first" : isEditing ? "Please save before sending for approval" : ""}
-                                        >
-                                            <Send className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
-                                            Send Approve
-                                        </button>
+                                        {!isReadOnly && (
+                                            <button
+                                                type="button"
+                                                onClick={handleApprove}
+                                                disabled={isPendingApproval || !productId || isEditing}
+                                                className={`flex-1 sm:flex-none group flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-md active:scale-95 ${isPendingApproval || !productId || isEditing
+                                                    ? 'bg-slate-100 text-slate-400 shadow-none cursor-not-allowed border border-slate-200'
+                                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-200'
+                                                    }`}
+                                                title={!productId ? "Please save as draft first" : isEditing ? "Please save before sending for approval" : ""}
+                                            >
+                                                <Send className="w-4 h-4 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 transition-transform" />
+                                                Send Approve
+                                            </button>
+                                        )}
                                     </>
                                 )}
                             </>)}
@@ -527,8 +579,8 @@ export default function CreateSection({
                 </div>
 
                 <fieldset
-                    disabled={!!(isReadOnly || isPendingApproval || status === 'rejected' || status === 'received' || (productId && !isEditing))}
-                    className={`transition-opacity ${isReadOnly || isPendingApproval || status === 'rejected' || status === 'received' || (productId && !isEditing) ? 'opacity-70 pointer-events-none' : ''}`}
+                    disabled={!!(isReadOnly || isPendingApproval || status === 'received' || status === 'fully_withdrawn' || status === 'procured' || (productId && !isEditing))}
+                    className={`transition-opacity ${isReadOnly || isPendingApproval || status === 'received' || status === 'fully_withdrawn' || status === 'procured' || (productId && !isEditing) ? 'opacity-70 pointer-events-none' : ''}`}
                 >
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
 

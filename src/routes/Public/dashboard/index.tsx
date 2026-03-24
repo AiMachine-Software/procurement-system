@@ -243,8 +243,8 @@ export default function Dashboard() {
                         }}
                         disabled={!canAddMember}
                         className={`absolute bottom-6 right-6 p-2.5 rounded-xl transition-all shadow border group ${canAddMember
-                            ? "text-white bg-amber-500 hover:bg-amber-600 border-amber-400/50 hover:shadow-lg hover:-translate-y-0.5"
-                            : "text-slate-400 bg-slate-200 border-slate-300 cursor-not-allowed opacity-60"
+                          ? "text-white bg-amber-500 hover:bg-amber-600 border-amber-400/50 hover:shadow-lg hover:-translate-y-0.5"
+                          : "text-slate-400 bg-slate-200 border-slate-300 cursor-not-allowed opacity-60"
                           }`}
                         title={canAddMember ? "Add Member" : "Only Owner or PM can add members"}
                       >
@@ -273,8 +273,8 @@ export default function Dashboard() {
                       key={idx}
                       onClick={() => setCurrentPage(idx + 1)}
                       className={`w-10 h-10 rounded-xl text-sm font-black flex items-center justify-center transition-all ${currentPage === idx + 1
-                          ? "bg-amber-600 text-white shadow-lg shadow-amber-200"
-                          : "text-slate-600 hover:bg-slate-100"
+                        ? "bg-amber-600 text-white shadow-lg shadow-amber-200"
+                        : "text-slate-600 hover:bg-slate-100"
                         }`}
                     >
                       {idx + 1}

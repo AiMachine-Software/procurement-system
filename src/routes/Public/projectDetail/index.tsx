@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Trash2, Plus, Package, Calendar, User, Users } from 'lucide-react';
+import { ArrowLeft, Edit2, Trash2, Plus, Package, Calendar, User, Users, Search as SearchIcon, Filter as FilterIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import EditProjectModal from './editprojectmodal';
 import DeleteProjectModal from './deleteprojectmodal';
 import { projectService } from '../../../services/project.service';
@@ -16,10 +16,18 @@ export default function ProjectDetail() {
     const [project, setProject] = useState<any>({ title: '', status: '' });
     const [isLoading, setIsLoading] = useState(true);
     const [isOwnerOrPM, setIsOwnerOrPM] = useState(false);
+    const [isMember, setIsMember] = useState(false);
 
     // Search Products Data
     const [products, setProducts] = useState<any[]>([]);
     const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+    const [searchQuery, setSearchQuery] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState<string>('');
+    const [isSearching, setIsSearching] = useState(false);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const fetchCategories = async () => {
         try {
@@ -35,13 +43,22 @@ export default function ProjectDetail() {
     };
 
     // Add fetching logic inside fetchProjectDetail or in another useEffect
-    const fetchProjectProducts = async () => {
+    const fetchProjectProducts = async (keyword?: string, statusCode?: string) => {
         try {
-            const data = await projectService.searchProjectProducts(projectId, {});
-            let actualData = data;
-            if (typeof data === 'string') {
+            setIsSearching(true);
+
+            let actualData;
+            if (!keyword?.trim() && !statusCode) {
+                // If no filter, use the original POST API (which is known to return all products)
+                actualData = await projectService.searchProjectProducts(projectId, {});
+            } else {
+                // If filter is active, use the new GET search API
+                actualData = await projectService.searchProjectProductsWithFilter(projectId, keyword, statusCode);
+            }
+
+            if (typeof actualData === 'string') {
                 try {
-                    actualData = JSON.parse(data);
+                    actualData = JSON.parse(actualData);
                 } catch (e) {
                     console.error("Failed to parse product string JSON");
                 }
@@ -51,18 +68,25 @@ export default function ProjectDetail() {
             if (Array.isArray(actualData)) {
                 productList = actualData;
             } else if (actualData && typeof actualData === 'object') {
+                // Common paths for backend data
                 if (Array.isArray(actualData.data)) productList = actualData.data;
                 else if (Array.isArray(actualData.items)) productList = actualData.items;
                 else if (Array.isArray(actualData.content)) productList = actualData.content;
                 else if (actualData.data && Array.isArray(actualData.data.items)) productList = actualData.data.items;
                 else if (actualData.data && Array.isArray(actualData.data.content)) productList = actualData.data.content;
+                else if (actualData.data && Array.isArray(actualData.data.data)) productList = actualData.data.data;
+                else if (Object.keys(actualData).length === 0) productList = [];
+                // If it's the raw axios response data field and it contains the list
+                else if (actualData.list && Array.isArray(actualData.list)) productList = actualData.list;
             }
 
-            console.log("Parsed product list array:", productList);
+            console.log("Fetched products:", productList);
             setProducts(productList || []);
         } catch (error) {
             console.error('Failed to load project products:', error);
             setProducts([]);
+        } finally {
+            setIsSearching(false);
         }
     };
 
@@ -129,6 +153,30 @@ export default function ProjectDetail() {
         });
     }, [products, categoryMap]);
 
+    // Pagination Calculations
+    const totalPages = Math.ceil(mappedProducts.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentItems = mappedProducts.slice(startIndex, startIndex + itemsPerPage);
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedStatus, itemsPerPage]);
+
+    const pageNumbers = useMemo(() => {
+        const pages = [];
+        const maxVisible = 5;
+        let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+        let end = Math.min(totalPages, start + maxVisible - 1);
+
+        if (end - start + 1 < maxVisible) {
+            start = Math.max(1, end - maxVisible + 1);
+        }
+
+        for (let i = start; i <= end; i++) pages.push(i);
+        return pages;
+    }, [currentPage, totalPages]);
+
     const fetchProjectDetail = async () => {
         try {
             setIsLoading(true);
@@ -192,6 +240,7 @@ export default function ProjectDetail() {
                 const currentUserMember = membersList.find((m: any) => String(m.userId) === String(currentUserId));
                 const roleCode = currentUserMember?.roleCode || currentUserMember?.role?.code;
                 setIsOwnerOrPM(roleCode === 'OWNER' || roleCode === 'PM');
+                setIsMember(!!currentUserMember);
 
                 setProject({
                     ...p,
@@ -218,9 +267,18 @@ export default function ProjectDetail() {
         if (projectId) {
             fetchCategories();
             fetchProjectDetail();
-            fetchProjectProducts();
         }
     }, [projectId]);
+
+    // Handle Search and Filter changes
+    useEffect(() => {
+        if (projectId) {
+            const timer = setTimeout(() => {
+                fetchProjectProducts(searchQuery, selectedStatus);
+            }, 300); // Debounce search
+            return () => clearTimeout(timer);
+        }
+    }, [projectId, searchQuery, selectedStatus]);
 
     // Edit Project State
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -334,18 +392,25 @@ export default function ProjectDetail() {
 
                             {/* Add Product Button */}
                             {(() => {
-                                const isProjectDisabled = project.status === 'IN_COMING' || project.status === 'CANCLE';
+                                const isProjectDisabled = project.status !== 'ACTIVE';
+                                const isAddDisabled = isProjectDisabled || !isMember;
                                 return (
                                     <button
-                                        onClick={() => !isProjectDisabled && navigate(`/project/${projectId}/add-product`)}
-                                        disabled={isProjectDisabled}
-                                        className={`group flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 shrink-0 ml-auto w-full md:w-auto justify-center ${isProjectDisabled
-                                                ? "bg-slate-200 text-slate-400 shadow-none cursor-not-allowed"
-                                                : "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
+                                        onClick={() => !isAddDisabled && navigate(`/project/${projectId}/add-product`)}
+                                        disabled={isAddDisabled}
+                                        className={`group flex items-center gap-2 px-6 py-3.5 rounded-2xl font-bold transition-all shadow-lg active:scale-95 shrink-0 ml-auto w-full md:w-auto justify-center ${isAddDisabled
+                                            ? "bg-slate-200 text-slate-400 shadow-none cursor-not-allowed"
+                                            : "bg-amber-600 hover:bg-amber-700 text-white shadow-amber-200"
                                             }`}
-                                        title={isProjectDisabled ? "Cannot add products when project is In coming or Canceled" : "Add Product"}
+                                        title={
+                                            isProjectDisabled
+                                                ? "Cannot add products when project is In coming or Canceled"
+                                                : !isMember
+                                                    ? "Only project members can add products"
+                                                    : "Add Product"
+                                        }
                                     >
-                                        <Plus size={20} className={isProjectDisabled ? "" : "group-hover:rotate-90 transition-transform duration-300"} />
+                                        <Plus size={20} className={isAddDisabled ? "" : "group-hover:rotate-90 transition-transform duration-300"} />
                                         Add Product
                                     </button>
                                 );
@@ -375,6 +440,52 @@ export default function ProjectDetail() {
                                 <span className="text-slate-900 font-bold">{project.due || '-'}</span>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Search and Filter Area */}
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 flex-1">
+                        <div className="relative flex-1 max-w-md group">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                <SearchIcon className={`w-4 h-4 transition-colors ${isSearching ? 'text-amber-500 animate-pulse' : 'text-slate-400 group-focus-within:text-amber-500'}`} />
+                            </div>
+                            <input
+                                type="text"
+                                placeholder="Search products or specifications..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-11 pr-4 text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all shadow-sm"
+                            />
+                        </div>
+
+                        <div className="relative group min-w-[200px]">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                                <FilterIcon className="w-4 h-4 text-slate-400 group-focus-within:text-amber-500 transition-colors" />
+                            </div>
+                            <select
+                                value={selectedStatus}
+                                onChange={(e) => setSelectedStatus(e.target.value)}
+                                className="w-full bg-white border border-slate-200 rounded-2xl py-3.5 pl-11 pr-10 text-sm text-slate-700 appearance-none focus:outline-none focus:ring-4 focus:ring-amber-500/10 focus:border-amber-500 transition-all shadow-sm cursor-pointer font-medium"
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="b1fc8b25-c572-4162-9131-7863e7af4873">Draft</option>
+                                <option value="8751dd60-119c-450e-8b2d-d4a76bbb6bbc">Pending Approval</option>
+                                <option value="02553c68-eaac-4a69-80f8-02533ad0d7fb">Approved</option>
+                                <option value="65e18ae6-077c-42cd-8cc0-f458f64c6622">Rejected</option>
+                                <option value="fbb4486c-bbf3-407d-b2f9-69b44bcd66cd">Procurement</option>
+                                <option value="1ddf7a3f-b181-4902-9cef-4523cd708c80">Received</option>
+                                <option value="4e0a678c-4c00-4c65-89b0-9f89bd9e0953">Reject Receive</option>
+                                <option value="6ef2c592-2006-498a-ae1a-9a31f9fd38cd">Withdrawn</option>
+                                <option value="7df5e92c-17e4-4ce1-8497-6d4951e50214">Fully Withdrawn</option>
+                            </select>
+                            <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="text-xs font-bold text-slate-400 uppercase tracking-widest bg-white px-5 py-3 rounded-2xl border border-slate-100 shadow-sm shrink-0 flex items-center gap-2">
+                        Total Items: <span className="text-slate-800 text-sm">{mappedProducts.length}</span>
                     </div>
                 </div>
 
@@ -422,7 +533,7 @@ export default function ProjectDetail() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {mappedProducts.length > 0 ? mappedProducts.map((product) => (
+                                {currentItems.length > 0 ? currentItems.map((product) => (
                                     <tr
                                         key={product.id}
                                         onClick={() => navigate(`/project/${projectId}/product/${product.id}`)}
@@ -441,7 +552,10 @@ export default function ProjectDetail() {
                                             {product.category}
                                         </td>
                                         <td className="px-4 py-4 text-center border-r border-slate-100">
-                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap bg-slate-50 text-slate-600 border border-slate-100">
+                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider whitespace-nowrap border ${product.statusName?.toUpperCase().includes('REJECT')
+                                                ? 'bg-rose-50 text-rose-600 border-rose-100'
+                                                : 'bg-slate-50 text-slate-600 border-slate-100'
+                                                }`}>
                                                 {product.statusName || '-'}
                                             </span>
                                         </td>
@@ -476,6 +590,66 @@ export default function ProjectDetail() {
                         </table>
                     </div>
                 </div>
+
+                {/* Pagination Controls */}
+                {mappedProducts.length > 0 && (
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm">
+                        <div className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-slate-500">Show</span>
+                            <select
+                                value={itemsPerPage}
+                                onChange={(e) => setItemsPerPage(Number(e.target.value))}
+                                className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-sm font-bold text-slate-700 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 transition-all cursor-pointer"
+                            >
+                                <option value={5}>5</option>
+                                <option value={10}>10</option>
+                                <option value={20}>20</option>
+                                <option value={50}>50</option>
+                            </select>
+                            <span className="text-sm font-medium text-slate-500">entries</span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                                disabled={currentPage === 1}
+                                className={`p-2 rounded-xl border transition-all ${currentPage === 1
+                                    ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-amber-500 hover:text-amber-600 shadow-sm'}`}
+                            >
+                                <ChevronLeft size={18} />
+                            </button>
+
+                            <div className="flex items-center gap-1">
+                                {pageNumbers.map(number => (
+                                    <button
+                                        key={number}
+                                        onClick={() => setCurrentPage(number)}
+                                        className={`w-10 h-10 rounded-xl text-sm font-bold transition-all ${currentPage === number
+                                            ? 'bg-amber-600 text-white shadow-lg shadow-amber-200'
+                                            : 'bg-white text-slate-600 hover:bg-slate-50 border border-transparent'}`}
+                                    >
+                                        {number}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <button
+                                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                                disabled={currentPage === totalPages}
+                                className={`p-2 rounded-xl border transition-all ${currentPage === totalPages
+                                    ? 'bg-slate-50 border-slate-100 text-slate-300 cursor-not-allowed'
+                                    : 'bg-white border-slate-200 text-slate-600 hover:border-amber-500 hover:text-amber-600 shadow-sm'}`}
+                            >
+                                <ChevronRight size={18} />
+                            </button>
+                        </div>
+
+                        <div className="text-sm font-semibold text-slate-400">
+                            Showing <span className="text-slate-700">{startIndex + 1}</span> to <span className="text-slate-700">{Math.min(startIndex + itemsPerPage, mappedProducts.length)}</span> of <span className="text-slate-700">{mappedProducts.length}</span> entries
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Edit Project Modal */}

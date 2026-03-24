@@ -63,25 +63,21 @@ export default function ApproveSection({ isPendingApproval, hasPermission = true
 
     return (
         <div className={`bg-white rounded-[2rem] shadow-sm border p-6 md:p-8 space-y-8 transition-all ${isInteractive
-            ? 'border-blue-100 shadow-md ring-1 ring-blue-50'
-            : isVisibleState
-                ? 'border-slate-200 opacity-100 shadow-sm'
-                : 'border-slate-100 opacity-60 grayscale-[0.5]'
+            ? 'border-blue-200 shadow-md ring-1 ring-blue-50/50'
+            : 'border-slate-100 shadow-none'
             }`}>
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
                 <div className={`p-3 rounded-xl ${isInteractive
-                    ? 'bg-blue-50 text-blue-600'
-                    : isVisibleState
-                        ? 'bg-amber-50 text-amber-600'
-                        : 'bg-slate-50 text-slate-400'
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'bg-blue-50/50 text-blue-400'
                     }`}>
                     <ShieldCheck className="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 className={`text-xl font-black tracking-tight ${isVisibleState ? 'text-slate-800' : 'text-slate-500'
+                    <h2 className={`text-xl font-black tracking-tight ${isInteractive ? 'text-slate-800' : 'text-slate-600'
                         }`}>Approval Section</h2>
-                    <p className="text-slate-500 text-sm mt-0.5">
+                    <p className="text-slate-500 text-sm mt-0.5 font-medium">
                         {!hasPermission && isPendingApproval
                             ? 'Waiting for approval (Approver only).'
                             : isInteractive
@@ -98,15 +94,13 @@ export default function ApproveSection({ isPendingApproval, hasPermission = true
             <div className={`space-y-6 ${!isVisibleState ? 'pointer-events-none' : ''}`}>
                 {/* Remark Field */}
                 <div className="space-y-2">
-                    <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${isVisibleState ? 'text-slate-700' : 'text-slate-400'
+                    <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${isInteractive ? 'text-slate-700' : 'text-slate-400'
                         }`}>Approver's Remark</label>
                     <div className="relative group">
                         <div className="absolute top-3.5 left-4 pointer-events-none">
                             <MessageSquare className={`h-5 w-5 transition-colors ${isInteractive
                                 ? 'text-slate-400 group-focus-within:text-blue-500'
-                                : hasExistingRemark
-                                    ? 'text-amber-500'
-                                    : 'text-slate-300'
+                                : 'text-blue-300'
                                 }`} />
                         </div>
                         <textarea
@@ -117,9 +111,7 @@ export default function ApproveSection({ isPendingApproval, hasPermission = true
                             disabled={!isInteractive}
                             className={`w-full border rounded-xl py-3 pl-12 pr-4 transition-all outline-none resize-none font-medium ${isInteractive
                                 ? 'bg-slate-50 border-slate-200 text-slate-700 placeholder:text-slate-400 focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white'
-                                : isVisibleState
-                                    ? 'bg-slate-50 border-slate-100 text-slate-700 cursor-default'
-                                    : 'bg-slate-50/50 border-slate-100 text-slate-400 placeholder:text-slate-300'
+                                : 'bg-slate-50/50 border-slate-100 text-slate-400 cursor-default'
                                 }`}
                         />
                     </div>

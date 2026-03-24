@@ -36,8 +36,8 @@ export default function Login() {
             <div className="max-w-md w-full">
                 {/* Header */}
                 <div className="text-center mb-10">
-                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-600 text-white shadow-lg shadow-amber-200 mb-6">
-                        <Lock size={32} />
+                    <div className="inline-flex items-center justify-center mb-6">
+                        <img src="/logoAI.png" alt="Logo" className="h-24 object-contain" />   
                     </div>
                     <h1 className="text-3xl font-black text-slate-900 tracking-tight mb-2">Welcome Back</h1>
                     <p className="text-slate-500 font-medium">Please enter your details to sign in.</p>

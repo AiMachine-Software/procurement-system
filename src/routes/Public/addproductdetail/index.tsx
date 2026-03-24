@@ -8,18 +8,19 @@ import { projectMemberService } from '../../../services/projectMember.service';
 import { productService } from '../../../services/product.service';
 import { flowService } from '../../../services/flow.service';
 
-type StatusType = 'draft' | 'pending' | 'approved' | 'rejected' | 'procured' | 'received';
+type StatusType = 'draft' | 'pending' | 'approved' | 'rejected' | 'procured' | 'received' | 'fully_withdrawn';
 
 // UUID constants จาก backend (ค่าคงที่ ไม่เปลี่ยน)
 const STATUS_UUID_MAP: Record<string, StatusType> = {
-    'b1fc8b25-c572-4162-9131-7863e7af4873': 'draft',        // STATUS_DRAFT
-    '8751dd60-119c-450e-8b2d-d4a76bbb6bbc': 'pending',      // STATUS_REQ_APPROVE
-    '02553c68-eaac-4a69-80f8-02533ad0d7fb': 'approved',     // STATUS_APPROVE
-    '65e18ae6-077c-42cd-8cc0-f458f64c6622': 'rejected',     // STATUS_REJECT
-    'fbb4486c-bbf3-407d-b2f9-69b44bcd66cd': 'procured',     // STATUS_PROCUREMENT
-    '1ddf7a3f-b181-4902-9cef-4523cd708c80': 'received',     // STATUS_RECEIVED
-    '4e0a678c-4c00-4c65-89b0-9f89bd9e0953': 'rejected',     // STATUS_NOT_RECEIVED
-    '6ef2c592-2006-498a-ae1a-9a31f9fd38cd': 'received',     // STATUS_WITHDRAWN
+    'b1fc8b25-c572-4162-9131-7863e7af4873': 'draft',           // STATUS_DRAFT
+    '8751dd60-119c-450e-8b2d-d4a76bbb6bbc': 'pending',         // STATUS_REQ_APPROVE
+    '02553c68-eaac-4a69-80f8-02533ad0d7fb': 'approved',        // STATUS_APPROVE
+    '65e18ae6-077c-42cd-8cc0-f458f64c6622': 'rejected',        // STATUS_REJECT
+    'fbb4486c-bbf3-407d-b2f9-69b44bcd66cd': 'procured',        // STATUS_PROCUREMENT
+    '1ddf7a3f-b181-4902-9cef-4523cd708c80': 'received',        // STATUS_RECEIVED
+    '4e0a678c-4c00-4c65-89b0-9f89bd9e0953': 'rejected',        // STATUS_NOT_RECEIVED
+    '6ef2c592-2006-498a-ae1a-9a31f9fd38cd': 'received',        // STATUS_WITHDRAWN
+    '7df5e92c-17e4-4ce1-8497-6d4951e50214': 'fully_withdrawn', // STATUS_FULLY_WITHDRAWN
 };
 
 export default function AddProductDetail() {
@@ -34,7 +35,7 @@ export default function AddProductDetail() {
     const [procurementData, setProcurementData] = useState<{ status: string; dateReceive: string; buyFrom: string; remark: string } | null>(null);
 
     const isPendingApproval = status === 'pending';
-    const isApproved = status === 'approved' || status === 'procured' || status === 'received';
+    const isApproved = status === 'approved' || status === 'procured' || status === 'received' || status === 'fully_withdrawn';
 
     const loadData = async () => {
         if (!productId) return;
@@ -65,7 +66,7 @@ export default function AddProductDetail() {
                     receiverName: resolveName(rawName) || authService.getCurrentUserName() || 'Unknown',
                     receiveDate: receiveObj.date || receiveObj.receiveDate || String(receiveObj) || new Date().toISOString()
                 });
-            } else if (mapped === 'received') {
+            } else if (mapped === 'received' || mapped === 'fully_withdrawn') {
                 // Fallback to prevent the badge from disappearing if the API response doesn't nest the object
                 setReceiveData({
                     receiverName: resolveName((product as any).updatedBy) || authService.getCurrentUserName() || 'Unknown User',

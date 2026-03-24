@@ -49,14 +49,14 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
     const isDisabled = !isApproved || isSaved || !hasPermission;
 
     return (
-        <div className={`bg-white rounded-[2rem] shadow-sm border p-6 md:p-8 space-y-8 transition-colors ${isApproved && hasPermission ? 'border-amber-100' : 'border-slate-100 opacity-60'}`}>
+        <div className={`bg-white rounded-[2rem] shadow-sm border p-6 md:p-8 space-y-8 transition-colors ${isApproved && hasPermission ? 'border-amber-100 shadow-md ring-1 ring-amber-50/50' : 'border-slate-100'}`}>
             {/* Header */}
             <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                <div className={`p-3 rounded-xl ${isApproved && hasPermission ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-400'}`}>
+                <div className={`p-3 rounded-xl ${isApproved && hasPermission ? 'bg-amber-100 text-amber-600' : 'bg-amber-50/50 text-amber-400'}`}>
                     <ClipboardCheck className="w-6 h-6" />
                 </div>
                 <div>
-                    <h2 className={`text-xl font-black tracking-tight ${isApproved && hasPermission ? 'bg-gradient-to-r from-emerald-600 to-amber-500 bg-clip-text text-transparent' : 'text-slate-500'}`}>
+                    <h2 className={`text-xl font-black tracking-tight ${isApproved && hasPermission ? 'bg-gradient-to-r from-emerald-600 to-amber-500 bg-clip-text text-transparent' : 'text-slate-600'}`}>
                         Procurement Details
                     </h2>
                     <p className="text-slate-500 text-sm mt-0.5 font-medium">
@@ -69,10 +69,10 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
                 <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 gap-y-6">
                     {/* Status Dropdown */}
                     <div className="space-y-2">
-                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-400'}`}>Status <span className="text-rose-500">*</span></label>
+                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-500'}`}>Status <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                <ShoppingCart className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-slate-300'}`} />
+                                <ShoppingCart className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-amber-400/60'}`} />
                             </div>
                             <select
                                 name="status"
@@ -95,10 +95,10 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
 
                     {/* Date Receive */}
                     <div className="space-y-2">
-                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-400'}`}>Date Receive <span className="text-rose-500">*</span></label>
+                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-500'}`}>Date Receive <span className="text-rose-500">*</span></label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                <Calendar className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-slate-300'}`} />
+                                <Calendar className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-amber-400/60'}`} />
                             </div>
                             <input
                                 type="date"
@@ -116,10 +116,10 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
 
                     {/* Buy From */}
                     <div className="space-y-2 lg:col-span-2">
-                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-400'}`}>Buy From</label>
+                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-500'}`}>Buy From</label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-                                <Building2 className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-slate-300'}`} />
+                                <Building2 className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-amber-400/60'}`} />
                             </div>
                             <input
                                 type="text"
@@ -137,10 +137,10 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
 
                     {/* Remark */}
                     <div className="space-y-2 lg:col-span-2">
-                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-400'}`}>Remark</label>
+                        <label className={`text-xs font-bold uppercase tracking-widest ml-1 ${!isDisabled ? 'text-slate-700' : 'text-slate-500'}`}>Remark</label>
                         <div className="relative group">
                             <div className="absolute top-3.5 left-4 pointer-events-none">
-                                <MessageSquare className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-slate-300'}`} />
+                                <MessageSquare className={`h-5 w-5 transition-colors ${!isDisabled ? 'text-slate-400 group-focus-within:text-amber-500' : 'text-amber-400/60'}`} />
                             </div>
                             <textarea
                                 name="remark"

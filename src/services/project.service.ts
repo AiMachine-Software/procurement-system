@@ -60,7 +60,15 @@ export const projectService = {
     },
 
     searchProjectProducts: async (projectId: string, data: ProductSearchRequest = {}) => {
-        const response = await axiosClient.post(`/v1/projects/${projectId}/product`, data);
+        const response = await axiosClient.post(`/v1/products/${projectId}/product`, data);
+        return response.data;
+    },
+
+    searchProjectProductsWithFilter: async (projectId: string, keyword?: string, statusCode?: string) => {
+        const params: any = {};
+        if (keyword) params.keyword = keyword;
+        if (statusCode) params.statusCode = statusCode;
+        const response = await axiosClient.get(`/v1/products/project/${projectId}/search`, { params });
         return response.data;
     }
 };
