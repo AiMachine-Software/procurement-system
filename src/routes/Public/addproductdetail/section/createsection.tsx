@@ -239,9 +239,12 @@ export default function CreateSection({
                     setUploadedImagePath(product.imageUrl);
                     // รูปต้องการ auth token — fetch พร้อม Bearer แล้วสร้าง Blob URL
                     const apiBase = (import.meta.env.VITE_API_URL || '').replace('/api', '');
-                    const fullUrl = product.imageUrl.startsWith('http')
+                    let fullUrl = product.imageUrl.startsWith('http')
                         ? product.imageUrl
                         : `${apiBase}${product.imageUrl}`;
+                    
+                    // บังคับเปลี่ยนเป็น https ก่อนแสดงผลเพื่อแก้รูประบบไม่โหลดเพราะ error เป็น http
+                    fullUrl = fullUrl.replace(/^http:\/\//i, 'https://');
                     const token = localStorage.getItem('token');
                     fetch(fullUrl, {
                         headers: token ? { Authorization: `Bearer ${token}` } : {},
