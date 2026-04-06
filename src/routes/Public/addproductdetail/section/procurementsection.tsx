@@ -24,7 +24,7 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
             let normalizedStatus = savedData.status || 'Make';
             if (normalizedStatus.toUpperCase() === 'MAKE') normalizedStatus = 'Make';
             if (normalizedStatus.toUpperCase() === 'BUY') normalizedStatus = 'Buy';
-            if (normalizedStatus.toUpperCase() === 'IN_STOCK' || normalizedStatus.toUpperCase() === 'INSTOCK') normalizedStatus = 'In_stock';
+            if (normalizedStatus.toUpperCase() === 'INSTOCK' || normalizedStatus.toUpperCase() === 'INSTOCK') normalizedStatus = 'In_stock';
 
             setFormData({
                 status: normalizedStatus,
@@ -85,7 +85,7 @@ export default function ProcurementSection({ isApproved, hasPermission = true, i
                             >
                                 <option value="Make">Make</option>
                                 <option value="Buy">Buy</option>
-                                <option value="In_stock">In_stock</option>
+                                <option value="In_stock">In Stock</option>
                             </select>
                             <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                                 <svg className={`w-5 h-5 ${!isDisabled ? 'text-slate-400' : 'text-slate-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
