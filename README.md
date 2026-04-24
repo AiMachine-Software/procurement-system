@@ -1,16 +1,63 @@
-# React + Vite
+# Procurement System (ระบบจัดซื้อจัดจ้าง)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+โปรเจคนี้คือระบบจัดการการจัดซื้อจัดจ้าง (Procurement System) ที่พัฒนาด้วย **React** และ **Vite** พร้อมการออกแบบที่ทันสมัยและตอบโจทย์การใช้งาน
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
 
-## React Compiler
+- **Frontend Framework:** [React 19](https://react.dev/)
+- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+- **Data Fetching:** [Axios](https://axios-http.com/)
+- **Routing:** [React Router 7](https://reactrouter.com/)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 🛠 วิธีเริ่มใช้งานโปรเจค (Getting Started)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 1. ติดตั้ง Dependencies
+เปิด Terminal ในโฟลเดอร์โปรเจคแล้วรันคำสั่ง:
+```bash
+npm install
+```
+
+### 2. ตั้งค่า Environment Variables
+สร้างไฟล์ `.env` ที่ root ของโปรเจค (หรือแก้ไขไฟล์ที่มีอยู่) และกำหนด URL ของ API:
+```env
+VITE_API_URL=http://your-api-url:8081/api
+```
+
+### 3. รันโปรเจคในโหมด Developer
+เพื่อเปิดใช้งานเซิร์ฟเวอร์จำลองสำหรับพัฒนา:
+```bash
+npm run dev
+```
+หลังจากรันเสร็จ โปรเจคจะเปิดที่ [http://localhost:5173](http://localhost:5173) (หรือตามที่ระบุใน Terminal)
+
+---
+
+## 📦 การ Build สำหรับ Production
+
+เมื่อต้องการนำโปรเจคไปใช้งานจริง (Deploy) ให้ใช้คำสั่ง:
+
+```bash
+npm run build
+```
+ไฟล์ที่ได้จะถูกเก็บไว้ในโฟลเดอร์ `dist/`
+
+---
+
+## 📂 โครงสร้างโปรเจคที่สำคัญ
+
+- `src/routes/`: จัดเก็บหน้าที่แสดงผลตามเส้นทาง (Routes) เช่น Dashboard, Login, Project Detail
+- `src/components/`: จัดเก็บ Component ที่นำมาใช้ซ้ำได้
+- `public/`: จัดเก็บไฟล์ Static ต่างๆ เช่น รูปภาพ
+- `vite.config.js`: ไฟล์ตั้งค่าของ Vite
+
+---
+
+## 💡 คำสั่งอื่นๆ
+- `npm run lint`: ตรวจสอบความถูกต้องของ Code ตามกฎ ESLint
+- `npm run preview`: พรีวิวโปรเจคที่ Build เสร็จแล้วในเครื่องตัวเอง
